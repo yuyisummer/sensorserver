@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:mysql://39.106.54.222:3306/websensor?useUnicode=true&characterEncoding=utf8&autoReconnect=true
+    username: root
+    password: 15162722241
+  http:
+    multipart:
+    enabled: true
+    max-file-size: 204800Mb
+    max-request-size: 204800Mb
+  redis:
+    database: 1
+    host: 39.106.54.222
+    port: 6378
+    password:
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1
+        max-idle: 500
+        min-idle: 0
+    timeout: 5000
+
+#  context:
+#    component-scan base-package : com.jit.sensor.base
+debug: true
+mybatis:
+  type-aliases-package: com.jit.sensor.model
+server:
+  port: 8888

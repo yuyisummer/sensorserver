@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <settings>
+        <!-- Globally enables or disables any caches configured in any VedioService.mapper under this configuration -->
+        <setting name="cacheEnabled" value="false"/>
+        <!-- Sets the number of seconds the driver will wait for a response from the database -->
+        <setting name="defaultStatementTimeout" value="5"/>
+        <!-- Enables automatic mapping from classic database column names A_COLUMN to camel case classic Java property names aColumn -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- Allows JDBC support for generated keys. A compatible driver is required.
+        This setting forces generated keys to be used if set to true,
+         as some drivers deny compatibility but still work -->
+        <setting name="useGeneratedKeys" value="true"/>
+    </settings>
+    <environments default="VedioService">
+        <environment id="VedioService">
+            <transactionManager type="jdbc"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://39.106.54.222:3306/websensor?useUnicode=true&amp;characterEncoding=utf8"/>
+                <property name="username" value="root"/>
+                <property name="password" value="15162722241"/>
+            </dataSource>
+        </environment>
+    </environments>
+<mappers>
+    <!--<mapper resource="com.jit.vedioserver.mapper.TestMapper"/>-->
+<mapper resource="com.jit.sensor.mapper.SensordataMapper"/>
+<mapper resource="com.jit.sensor.mapper.SensorinfoMapper"/>
+</mappers>
+    <!-- Continue editing here -->
+
+</configuration>

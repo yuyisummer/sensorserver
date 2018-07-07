@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.model.Sensorinfo;
 import com.jit.sensor.model.TMessage;
 import com.jit.sensor.service.SensorInfoService;
+import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/sensor")
+@Api(value = "/sensor",tags = {"配置操作接口"})
 public class SensorProfile {
     TMessage tMessage;
     @Autowired
@@ -22,9 +24,10 @@ public class SensorProfile {
 
 
 
-
+    @ApiOperation(value="插入传感器配置文件", notes="通过解析JSONObject转为对象插入数据库中")
     @PostMapping("insertprofile")
-    public String InsertProfile(@RequestBody JSONObject json){
+    @ApiParam(value ="json", required = true,example ="123")
+    public String InsertProfile(@RequestBody  JSONObject json){
         Sensorinfo sensorinfo = null;
         System.out.println("json:"+json);
         try {

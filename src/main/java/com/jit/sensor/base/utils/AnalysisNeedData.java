@@ -1,11 +1,12 @@
 package com.jit.sensor.base.utils;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.util.*;
 
-public class AnalysisNeedData {
+public class AnalysisNeedData implements ApplicationContextAware {
     private static Map<String,Map<String,String>> needdatalist =
             new HashMap<String,Map<String,String>>(){};
 
@@ -44,4 +45,33 @@ public class AnalysisNeedData {
 
     }
 
+    private static ApplicationContext applicationContext;//启动类set入，调用下面set方法
+
+    public void setApplicationContext(ApplicationContext context) {
+        applicationContext = context;
     }
+
+    public static Object getClass(Class<?> t){
+        if(applicationContext!=null) {
+            System.out.println("BeanName:"+t.getName());
+            return applicationContext.getBean(t.getSimpleName()+".class");
+        }
+        else{
+            System.out.println("application为空");
+            return null;
+        }
+    }
+
+
+    public static <T> T getBean(String name) {
+      //  assertContextInjected();
+        return (T) applicationContext.getBean(name);
+    }
+
+    public static <T> T getBean(Class<T> requiredType) {
+        return applicationContext.getBean(requiredType);
+    }
+
+
+
+}

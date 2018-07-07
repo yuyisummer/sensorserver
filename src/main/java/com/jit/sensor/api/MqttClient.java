@@ -123,26 +123,6 @@ public class MqttClient {
                         } else{
                             System.out.println("传感器数据插入失败");
                         }
-
-
-//                        Random random = new Random();
-//
-//                        sensordata.setHumidity((double) random.nextInt(100));
-//                        sensordata.setTemp((double) random.nextInt(100));
-//                        sensordata.setWindspeed((double) random.nextInt(30));
-//
-//                        sensordata.setDate(String.valueOf(new Date().getTime()));
-//                        sensordata.setDeveui(jsonObject.getString("devEUI"));
-//                        //插入数据
-//
-//                        if (sensordataService.InsertData(sensordata)) {
-//                            System.out.println("MQTT接收数据，插入成功");
-//                        } else {
-//                            System.out.println("MQTT接收数据，插入失败");
-//                        }
-//                        MessageTransfer.sendMessage(JSONObject.toJSONString(sensordata));
-
-
                     }
 
 

@@ -16,4 +16,13 @@ public class ReturnStr {
         tMessage.Data = json;
         return JSON.toJSONString(tMessage);
     }
+
+    public  TMessage setTMessageObject(int i, String str, JSONObject json) {
+        tMessage = new TMessage();
+        tMessage.Code = i;
+        tMessage.Message = str;
+        tMessage.Time = String.valueOf(new Date());
+        tMessage.Data = json;
+        return tMessage;
+    }
 }

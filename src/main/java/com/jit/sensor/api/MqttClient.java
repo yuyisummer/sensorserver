@@ -20,7 +20,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import sun.misc.BASE64Decoder;
+
+import java.util.Base64;
+import java.util.Base64.*;
 
 import java.io.IOException;
 import java.util.Date;
@@ -44,7 +46,7 @@ public class MqttClient {
 
 
     public MqttClient(ApplicationContext context) {
-        this.applicationContext = context;
+        applicationContext = context;
         sensordataService = getSensordataService();
         mqttSet = getMqttSet();
         universalDataService = getUniversalDataService();
@@ -104,19 +106,15 @@ public class MqttClient {
 
                     String data1 = null;
                     data1 = jsonObject.getString("data");
-                    BASE64Decoder decoder = new BASE64Decoder();
+                    Decoder decoder = Base64.getDecoder();
                     if (data1 != null) {
                         Universaldata universaldata = new Universaldata();
                         universaldata.setDeveui(jsonObject.getString("devEUI"));
-                        try {
-                            byte[] decode = decoder.decodeBuffer(data1);
-                            System.out.println("decode:"+decode[0]);
-                            universaldata.setDevtype(String.valueOf(decode[0]));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        byte[] decode = decoder.decode(data1);
+                        System.out.println("decode:" + decode[0]);
+                        universaldata.setDevtype(String.valueOf(decode[0]));
                         universaldata.setData(data1);
-                        universaldata.setTime(String.valueOf(new Date().getTime()));
+                        universaldata.setTime(String.valueOf(System.currentTimeMillis()));
 
                         if(universalDataService.insertdata(universaldata)){
                             System.out.println("传感器数据插入成功");
@@ -155,12 +153,14 @@ public class MqttClient {
             callbackConnection.connect(new Callback<Void>() {
 
                 // 连接失败
+                @Override
                 public void onFailure(Throwable value) {
                     System.out.println("============连接失败："
                             + value.getLocalizedMessage() + "============");
                 }
 
                 // 连接成功
+                @Override
                 public void onSuccess(Void v) {
                     // 订阅主题
 
@@ -169,11 +169,13 @@ public class MqttClient {
                     callbackConnection.subscribe(topics,
                             new Callback<byte[]>() {
                                 // 订阅主题成功
+                                @Override
                                 public void onSuccess(byte[] qoses) {
                                     System.out.println("========订阅成功=======");
                                 }
 
                                 // 订阅主题失败
+                                @Override
                                 public void onFailure(Throwable value) {
                                     System.out.println("========订阅失败=======");
                                     callbackConnection.disconnect(null);
@@ -183,11 +185,13 @@ public class MqttClient {
                     // 发布消息
                     callbackConnection.publish("foo", ("Hello ").getBytes(),
                             QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
+                                @Override
                                 public void onSuccess(Void v) {
                                     System.out
                                             .println("===========消息发布成功============");
                                 }
 
+                                @Override
                                 public void onFailure(Throwable value) {
                                     System.out.println("========消息发布失败=======");
                                     callbackConnection.disconnect(null);

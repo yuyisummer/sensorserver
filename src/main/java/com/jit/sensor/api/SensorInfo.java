@@ -19,14 +19,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import sun.misc.BASE64Decoder;
+
+import java.util.*;
+import java.util.Base64.*;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/SensorInfo")
@@ -73,49 +71,46 @@ public class SensorInfo {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String sd = sdf.format(new Date(Long.parseLong(universaldata.getTime()))); // 时间戳转换日期
         System.out.println(sd);
-        BASE64Decoder decoder = new BASE64Decoder();
+        Decoder decoder = Base64.getDecoder();
 
         JSONObject jsonObject = new JSONObject();
-        try {
-            byte[] decode = decoder.decodeBuffer(universaldata.getData());
-            char[] list =  AnalysisNeedData.bytesToHexString(decode);
-            System.out.println("list.length:"+list.length);
-            int seek = 6;
-            for(int i = 0;i<decode[2];){
-                for (Map.Entry<String, String> entry : map.entrySet()) {
-                    System.out.println("接下来要解析的数据："+entry.getKey());
-                     if(entry.getKey().equals("all"))
-                        continue;
-                     else if(entry.getKey().equals("Remove")){
-                         seek+= Integer.valueOf(entry.getValue())*2;
-                         i+=Integer.valueOf(entry.getValue());
-                         continue;
-                     }
-                    String parameter = entry.getKey();
-
-                    int zijie = Integer.valueOf(entry.getValue());
-                    System.out.println("字节："+zijie);
-                    int ncifang = zijie*2;
-                    String str = null;
-                    int num = 0;
-                    for(int j = 0;j<zijie*2;j++){
-                        int zhi = 0;
-                        if(list[seek+j]>='0'&&list[seek+j]<='9')
-                            zhi = list[seek+j]-'0';
-                        else
-                            zhi = list[seek+j]-'a'+10;
-                        System.out.println("list[seek+j]"+list[seek+j] +" 位置:"+(seek+j)+" zhi:"+zhi);
-                        num += zhi*Math.pow(16,ncifang-1);
-                        ncifang--;
-                    }
-                    System.out.println("num:"+num);
-                    seek+= zijie*2;
-                    i+=zijie;
-                    jsonObject.put(entry.getKey(),num);
+        byte[] decode = decoder.decode(universaldata.getData());
+        char[] list = AnalysisNeedData.bytesToHexString(decode);
+        System.out.println("list.length:" + list.length);
+        int seek = 6;
+        for (int i = 0; i < decode[2]; ) {
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                System.out.println("接下来要解析的数据：" + entry.getKey());
+                if (entry.getKey().equals("all")) {
+                    continue;
+                } else if (entry.getKey().equals("Remove")) {
+                    seek += Integer.valueOf(entry.getValue()) * 2;
+                    i += Integer.valueOf(entry.getValue());
+                    continue;
                 }
+                String parameter = entry.getKey();
+
+                int zijie = Integer.valueOf(entry.getValue());
+                System.out.println("字节：" + zijie);
+                int ncifang = zijie * 2;
+                String str = null;
+                int num = 0;
+                for (int j = 0; j < zijie * 2; j++) {
+                    int zhi = 0;
+                    if (list[seek + j] >= '0' && list[seek + j] <= '9') {
+                        zhi = list[seek + j] - '0';
+                    } else {
+                        zhi = list[seek + j] - 'a' + 10;
+                    }
+                    System.out.println("list[seek+j]" + list[seek + j] + " 位置:" + (seek + j) + " zhi:" + zhi);
+                    num += zhi * Math.pow(16, ncifang - 1);
+                    ncifang--;
+                }
+                System.out.println("num:" + num);
+                seek += zijie * 2;
+                i += zijie;
+                jsonObject.put(entry.getKey(), num);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         JSONObject retjson = new JSONObject();

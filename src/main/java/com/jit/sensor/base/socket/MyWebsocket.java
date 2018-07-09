@@ -4,9 +4,7 @@ import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
-import javax.xml.crypto.Data;
 import java.io.IOException;
-import java.util.Date;
 
 @ServerEndpoint(value = "/websocket")
 @Component

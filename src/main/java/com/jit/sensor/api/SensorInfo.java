@@ -1,6 +1,5 @@
 package com.jit.sensor.api;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.base.utils.AnalysisNeedData;
 import com.jit.sensor.base.utils.FindSensorInfo;
@@ -13,30 +12,29 @@ import com.jit.sensor.service.SensorInfoService;
 import com.jit.sensor.service.UniversalDataService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
-import java.util.Base64.*;
-
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Date;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/SensorInfo")
-@Api(value = "/SensorInfo",tags = {"数据查询接口"})
+@Api(value = "/SensorInfo", tags = {"数据查询接口"})
 public class SensorInfo {
     @Autowired
     SensorInfoService sensorInfoService;
     @Autowired
     UniversalDataService universalDataService;
-    @ApiOperation(value="查询数据库中最新数据", notes="通过参数查询对应传感器上传的最近的一条数据")
+
+    @ApiOperation(value = "查询数据库中最新数据", notes = "通过参数查询对应传感器上传的最近的一条数据")
     @PostMapping("SelectInfo")
-   public TMessage SelectInfo(String deveui,String devtype) {
+    public TMessage SelectInfo(String deveui, String devtype) {
 
         ReturnStr returnStr = new ReturnStr();
 
@@ -45,21 +43,21 @@ public class SensorInfo {
         map = AnalysisNeedData.getNeedData(key);
         if (map == null) {
             System.out.println("map中没有对应解析");
-            System.out.println("deveui:"+deveui+" devtype:"+devtype);
-          //  Sensorinfo sensorinfo = sensorInfoService.selectByNeedData(deveui, devtype);
-           Sensorinfo sensorinfo = FindSensorInfo.find(deveui,devtype);
-            String data =  null ;
+            System.out.println("deveui:" + deveui + " devtype:" + devtype);
+            //  Sensorinfo sensorinfo = sensorInfoService.selectByNeedData(deveui, devtype);
+            Sensorinfo sensorinfo = FindSensorInfo.find(deveui, devtype);
+            String data = null;
             try {
                 data = sensorinfo.getDatalength();
-                System.out.println("data:"+data);
-            }catch (Exception e){
-              //  return returnStr.setTMessage(1, "数据库中没有对应信息", null);
+                System.out.println("data:" + data);
+            } catch (Exception e) {
+                //  return returnStr.setTMessage(1, "数据库中没有对应信息", null);
             }
 
             map = AnalysisNeedData.toMap(data);
 
             for (Map.Entry<String, String> entry : map.entrySet()) {
-                System.out.println("key:"+entry.getKey()+" value:"+entry.getValue());
+                System.out.println("key:" + entry.getKey() + " value:" + entry.getValue());
             }
 
 
@@ -114,11 +112,11 @@ public class SensorInfo {
         }
 
         JSONObject retjson = new JSONObject();
-        retjson.put("data",jsonObject);
-        retjson.put("time",sd);
+        retjson.put("data", jsonObject);
+        retjson.put("time", sd);
 
 
-    return ReturnUtil.finalObject(1,"获取最近一条数据", retjson);
+        return ReturnUtil.finalObject(1, "获取最近一条数据", retjson);
 
     }
 }

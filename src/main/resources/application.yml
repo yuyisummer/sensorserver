@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://39.106.54.222:3306/websensor?useUnicode=true&characterEncoding=utf8&autoReconnect=true
+    url: jdbc:mysql://39.106.54.222:3306/websensor?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false
     username: root
     password: 15162722241
   http:

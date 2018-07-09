@@ -1,18 +1,8 @@
 package com.jit.sensor.api;
 
 
-
-import com.alibaba.fastjson.JSONObject;
-import com.jit.sensor.base.utils.ReturnStr;
-import com.jit.sensor.model.Universaldata;
-import com.jit.sensor.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisKeyValueTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Date;
 
 
 @RestController
@@ -54,5 +44,5 @@ public class RedisController {
 //	}
 //
 
-	
+
 }

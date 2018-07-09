@@ -17,7 +17,7 @@ public class MessageTransfer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else{
+        } else {
             System.out.println("为空");
         }
     }

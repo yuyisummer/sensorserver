@@ -47,6 +47,7 @@ public class AnalysisNeedData implements ApplicationContextAware {
 
     private static ApplicationContext applicationContext;//启动类set入，调用下面set方法
 
+    @Override
     public void setApplicationContext(ApplicationContext context) {
         applicationContext = context;
     }

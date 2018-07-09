@@ -14,7 +14,6 @@ import org.fusesource.mqtt.client.*;
 import org.fusesource.mqtt.codec.MQTTFrame;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.LinkedHashMap;
@@ -47,10 +46,12 @@ public class MqttClient {
         applicationContext = context;
     }
 
+    public static boolean publishData(String string) {
+        return false;
+    }
+
     public void init() {
         try {
-
-
             mqttSet.builder();
             MQTT mqtt = mqttSet.getMqtt();
             // 选择消息分发队列
@@ -94,8 +95,8 @@ public class MqttClient {
 //                            .println("=============receive msg================"
 //                                    + new String(payload.toByteArray()));
 
-                    if ("chy".equals(new String(payload.toByteArray()))) {
-                    } else {
+                    String bugString = "chy";
+                    if (!bugString.equals(new String(payload.toByteArray()))) {
                         //获取数据
                         JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
                         System.out.println(jsonObject);
@@ -119,7 +120,6 @@ public class MqttClient {
                                 System.out.println("传感器数据插入失败");
                             }
                         }
-
                     }
 
                     onComplete.run();
@@ -183,27 +183,26 @@ public class MqttClient {
 
                     // 发布消息
                     Base64.Encoder encoder = Base64.getEncoder();
-                    //Topic[] sendTopics = {new Topic(sendTopic, QoS.AT_LEAST_ONCE)};
                     LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
                     linkedHashMap.put("reference", "abcd1234");
                     linkedHashMap.put("confirmed", true);
                     linkedHashMap.put("fPort", 10);
                     linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
-                    callbackConnection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
-                            QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
-                                @Override
-                                public void onSuccess(Void v) {
-                                    System.out
-                                            .println("===========消息发布成功============");
-                                }
-
-                                @Override
-                                public void onFailure(Throwable value) {
-                                    System.out.println("========消息发布失败=======");
-                                    System.out.println("value\t" + value);
-                                    callbackConnection.disconnect(this);
-                                }
-                            });
+//                    callbackConnection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
+//                            QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
+//                                @Override
+//                                public void onSuccess(Void v) {
+//                                    System.out
+//                                            .println("===========消息发布成功============");
+//                                }
+//
+//                                @Override
+//                                public void onFailure(Throwable value) {
+//                                    System.out.println("========消息发布失败=======");
+//                                    System.out.println("value\t" + value);
+//                                    callbackConnection.disconnect(this);
+//                                }
+//                            });
                 }
             });
 //            while (true) {

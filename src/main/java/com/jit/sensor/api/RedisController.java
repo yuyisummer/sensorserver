@@ -1,13 +1,49 @@
 package com.jit.sensor.api;
 
 
+import com.alibaba.fastjson.JSONObject;
+import com.jit.sensor.service.MqttConfig;
+import org.fusesource.mqtt.client.BlockingConnection;
+import org.fusesource.mqtt.client.MQTT;
+import org.fusesource.mqtt.client.QoS;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Base64;
+import java.util.LinkedHashMap;
 
 
 @RestController
 @RequestMapping("redis")
 public class RedisController {
+
+    @PostMapping("/testDownData")
+    public Object test(@RequestBody JSONObject jsonObject) throws Exception {
+        String sendTopic = "application/2/device/004a770066003289/tx";
+//        MqttSet mqttSet;
+//        mqttSet = MqttClient.getMqttSet();
+//        mqttSet.builder();
+        MQTT mqtt = new MQTT();
+        MqttConfig mqttConfig = new MqttConfig();
+        mqttConfig.configure(mqtt);
+        BlockingConnection connection = mqtt.blockingConnection();
+        connection.connect();
+
+        Base64.Encoder encoder = Base64.getEncoder();
+        LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+        linkedHashMap.put("reference", "abcd1234");
+        linkedHashMap.put("confirmed", true);
+        linkedHashMap.put("fPort", 10);
+        linkedHashMap.put("data", new String(encoder.encode(jsonObject.getString("message").getBytes())));
+
+        connection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
+                QoS.AT_LEAST_ONCE, true);
+        System.out.println("===========消息发布成功============");
+        connection.disconnect();
+        return "test";
+    }
 
 //	@Autowired
 //	private StringRedisTemplate strRedis;

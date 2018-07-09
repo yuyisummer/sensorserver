@@ -14,8 +14,10 @@ import org.fusesource.mqtt.client.*;
 import org.fusesource.mqtt.codec.MQTTFrame;
 import org.springframework.context.ApplicationContext;
 
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
+import java.util.LinkedHashMap;
 
 
 //@RestController
@@ -52,7 +54,8 @@ public class MqttClient {
             mqttSet.builder();
             MQTT mqtt = mqttSet.getMqtt();
             // 选择消息分发队列
-            mqtt.setDispatchQueue(Dispatch.createQueue("fol"));// 若没有调用方法setDispatchQueue，客户端将为连接新建一个队列。如果想实现多个连接使用公用的队列，显式地指定队列是一个非常方便的实现方法
+            mqtt.setDispatchQueue(Dispatch.createQueue("fol"));
+            // 若没有调用方法setDispatchQueue，客户端将为连接新建一个队列。如果想实现多个连接使用公用的队列，显式地指定队列是一个非常方便的实现方法
 
             // 设置跟踪器
             mqtt.setTracer(new Tracer() {
@@ -87,12 +90,11 @@ public class MqttClient {
                 @Override
                 public void onPublish(UTF8Buffer topic, Buffer payload,
                                       Runnable onComplete) {
-                    System.out
-                            .println("=============receive msg================"
-                                    + new String(payload.toByteArray()));
+//                    System.out
+//                            .println("=============receive msg================"
+//                                    + new String(payload.toByteArray()));
 
-                    if (new String(payload.toByteArray()).equals("chy")) {
-                        System.out.println("app");
+                    if ("chy".equals(new String(payload.toByteArray()))) {
                     } else {
                         //获取数据
                         JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
@@ -120,9 +122,7 @@ public class MqttClient {
 
                     }
 
-
                     onComplete.run();
-
                 }
 
                 // 连接失败
@@ -182,9 +182,14 @@ public class MqttClient {
 
 
                     // 发布消息
-//                    Base64.Encoder encoder = Base64.getEncoder();
+                    Base64.Encoder encoder = Base64.getEncoder();
                     //Topic[] sendTopics = {new Topic(sendTopic, QoS.AT_LEAST_ONCE)};
-                    callbackConnection.publish(sendTopic, ("AHello").getBytes(),
+                    LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+                    linkedHashMap.put("reference", "abcd1234");
+                    linkedHashMap.put("confirmed", true);
+                    linkedHashMap.put("fPort", 10);
+                    linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
+                    callbackConnection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
                             QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
                                 @Override
                                 public void onSuccess(Void v) {
@@ -196,19 +201,6 @@ public class MqttClient {
                                 public void onFailure(Throwable value) {
                                     System.out.println("========消息发布失败=======");
                                     System.out.println("value\t" + value);
-//                                    UTF8Buffer[] aa={Buffer.utf8(sendTopic)};
-//
-//                                    callbackConnection.unsubscribe(aa, new Callback<Void>() {
-//                                        @Override
-//                                        public void onSuccess(Void aVoid) {
-//                                            System.out.println("aaa");
-//                                        }
-//
-//                                        @Override
-//                                        public void onFailure(Throwable throwable) {
-//                                            System.out.println(""+throwable);
-//                                        }
-//                                    });
                                     callbackConnection.disconnect(this);
                                 }
                             });

@@ -11,7 +11,7 @@ import java.util.Date;
 @ServerEndpoint(value = "/websocket")
 @Component
 public class MyWebsocket {
-    private Session session;
+    private static Session session;
 
     /**
      * 连接建立成功调用的方法
@@ -50,8 +50,8 @@ public class MyWebsocket {
         error.printStackTrace();
     }
 
-    public void sendMessage(String message) throws IOException {
-        this.session.getBasicRemote().sendText(message);
+    public  static void sendMessage(String message) throws IOException {
+        session.getBasicRemote().sendText(message);
     }
 
 

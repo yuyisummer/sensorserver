@@ -127,4 +127,14 @@
   </select>
 
 
+  <select id="selectIntervalData" parameterType="map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from universaldata
+    where  time <![CDATA[ >= ]]> #{lasttime,jdbcType=VARCHAR}
+    and time <![CDATA[ <= ]]> #{nowtime,jdbcType=VARCHAR}
+    order by time DESC
+  </select>
+
+
 </mapper>

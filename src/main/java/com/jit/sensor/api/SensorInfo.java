@@ -2,10 +2,7 @@ package com.jit.sensor.api;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.jit.sensor.base.utils.AnalysisNeedData;
-import com.jit.sensor.base.utils.FindSensorInfo;
-import com.jit.sensor.base.utils.ReturnStr;
-import com.jit.sensor.base.utils.ReturnUtil;
+import com.jit.sensor.base.utils.*;
 import com.jit.sensor.model.Sensorinfo;
 import com.jit.sensor.model.TMessage;
 import com.jit.sensor.model.Universaldata;
@@ -30,100 +27,33 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/SensorInfo")
-@Api(value = "/SensorInfo",tags = {"数据查询接口"})
+@Api(value = "/SensorInfo", tags = {"数据查询接口"})
 public class SensorInfo {
     @Autowired
     SensorInfoService sensorInfoService;
     @Autowired
     UniversalDataService universalDataService;
-    @ApiOperation(value="查询数据库中最新数据", notes="通过参数查询对应传感器上传的最近的一条数据")
-    @PostMapping("SelectInfo")
-   public TMessage SelectInfo(String deveui,String devtype) {
 
-        ReturnStr returnStr = new ReturnStr();
-
+    @ApiOperation(value = "查询数据库中最新数据", notes = "通过参数查询对应传感器上传的最近的一条数据")
+    @PostMapping(value = "SelectInfo",consumes = "application/json")
+    public TMessage SelectInfo(@RequestBody Sensorinfo sensorinfo ){
+    //public TMessage SelectInfo(String deveui, String devtype) {
+        System.out.println("Sensorinfo:"+sensorinfo.getDeveui());
+        System.out.println("Sensorinfo:"+sensorinfo.getDevtype());
         Map<String, String> map = null;
-        String key = deveui + "-" + devtype;
-        map = AnalysisNeedData.getNeedData(key);
-        if (map == null) {
-            System.out.println("map中没有对应解析");
-            System.out.println("deveui:"+deveui+" devtype:"+devtype);
-          //  Sensorinfo sensorinfo = sensorInfoService.selectByNeedData(deveui, devtype);
-           Sensorinfo sensorinfo = FindSensorInfo.find(deveui,devtype);
-            String data =  null ;
-            try {
-                data = sensorinfo.getDatalength();
-                System.out.println("data:"+data);
-            }catch (Exception e){
-              //  return returnStr.setTMessage(1, "数据库中没有对应信息", null);
-            }
-
-            map = AnalysisNeedData.toMap(data);
-
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                System.out.println("key:"+entry.getKey()+" value:"+entry.getValue());
-            }
-
-
-            AnalysisNeedData.SetNeedData(key, map);
-        }
+        String deveui = sensorinfo.getDeveui();
+        String devtype = sensorinfo.getDevtype();
+        map = FindSensorData.GetSensorInfoMap(deveui, devtype);
         Universaldata universaldata = null;
-
         universaldata = universalDataService.SelectLastData(deveui, devtype);
+        System.out.println("最近一条数据的时间："+universaldata.getTime());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String sd = sdf.format(new Date(Long.parseLong(universaldata.getTime()))); // 时间戳转换日期
         System.out.println(sd);
-        BASE64Decoder decoder = new BASE64Decoder();
-
-        JSONObject jsonObject = new JSONObject();
-        try {
-            byte[] decode = decoder.decodeBuffer(universaldata.getData());
-            char[] list =  AnalysisNeedData.bytesToHexString(decode);
-            System.out.println("list.length:"+list.length);
-            int seek = 6;
-            for(int i = 0;i<decode[2];){
-                for (Map.Entry<String, String> entry : map.entrySet()) {
-                    System.out.println("接下来要解析的数据："+entry.getKey());
-                     if(entry.getKey().equals("all"))
-                        continue;
-                     else if(entry.getKey().equals("Remove")){
-                         seek+= Integer.valueOf(entry.getValue())*2;
-                         i+=Integer.valueOf(entry.getValue());
-                         continue;
-                     }
-                    String parameter = entry.getKey();
-
-                    int zijie = Integer.valueOf(entry.getValue());
-                    System.out.println("字节："+zijie);
-                    int ncifang = zijie*2;
-                    String str = null;
-                    int num = 0;
-                    for(int j = 0;j<zijie*2;j++){
-                        int zhi = 0;
-                        if(list[seek+j]>='0'&&list[seek+j]<='9')
-                            zhi = list[seek+j]-'0';
-                        else
-                            zhi = list[seek+j]-'a'+10;
-                        System.out.println("list[seek+j]"+list[seek+j] +" 位置:"+(seek+j)+" zhi:"+zhi);
-                        num += zhi*Math.pow(16,ncifang-1);
-                        ncifang--;
-                    }
-                    System.out.println("num:"+num);
-                    seek+= zijie*2;
-                    i+=zijie;
-                    jsonObject.put(entry.getKey(),num);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         JSONObject retjson = new JSONObject();
-        retjson.put("data",jsonObject);
-        retjson.put("time",sd);
-
-
-    return ReturnUtil.finalObject(1,"获取最近一条数据", retjson);
+        retjson.put("data", FindSensorData.getAnalysisData(map, universaldata));
+        retjson.put("time", sd);
+        return ReturnUtil.finalObject(1, "获取最近一条数据", retjson);
 
     }
 }

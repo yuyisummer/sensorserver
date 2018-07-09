@@ -9,7 +9,7 @@ spring:
     max-file-size: 204800Mb
     max-request-size: 204800Mb
   redis:
-    database: 1
+    database: 2
     host: 39.106.54.222
     port: 6378
     password:
@@ -19,7 +19,7 @@ spring:
         max-wait: -1
         max-idle: 500
         min-idle: 0
-    timeout: 5000
+    timeout: 10000
 
 #  context:
 #    component-scan base-package : com.jit.sensor.base

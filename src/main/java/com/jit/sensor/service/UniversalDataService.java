@@ -5,6 +5,8 @@ import com.jit.sensor.model.Universaldata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UniversalDataService {
 
@@ -17,5 +19,9 @@ public class UniversalDataService {
 
     public Universaldata SelectLastData(String deveui,String devtype){
         return universaldataMapper.selectLastInfo(deveui,devtype);
+    }
+
+    public List<Universaldata> SelectIntervalData(String nowtime,String lasttime){
+        return  universaldataMapper.selectIntervalData(nowtime,lasttime);
     }
 }

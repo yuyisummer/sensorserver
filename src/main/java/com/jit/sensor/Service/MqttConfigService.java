@@ -1,34 +1,56 @@
 package com.jit.sensor.Service;
 
-import org.fusesource.mqtt.client.MQTT;
-import org.fusesource.mqtt.client.QoS;
+import com.alibaba.fastjson.JSONObject;
+import com.jit.sensor.Entity.TResult;
+import com.jit.sensor.Util.MqttConfig;
+import org.fusesource.mqtt.client.*;
+import org.springframework.stereotype.Service;
 
-import java.net.URISyntaxException;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 
+@Service
 public class MqttConfigService {
+    private MqttConfig mqttConfig = new MqttConfig();
 
-    public void configure(MQTT mqtt) throws URISyntaxException {
+    public Object uploadData(JSONObject jsonObject) {
+        String recvTopic = "application/" + jsonObject.getString("Application") +
+                "/device/" + jsonObject.getString("Deveui") +
+                "/" + jsonObject.getString("Channel");
+        Topic[] recvTopics = {new Topic(recvTopic, QoS.AT_LEAST_ONCE)};
 
-        mqtt.setHost("tcp://39.106.54.222:1883");
-        mqtt.setClientId("876543211");
-        mqtt.setCleanSession(true);
-        mqtt.setKeepAlive((short) 60);
-        mqtt.setUserName("admin");
-        mqtt.setPassword("admin");
-        mqtt.setWillTopic("WillTopic");
-        mqtt.setWillMessage("willMessage");
-        mqtt.setWillQos(QoS.AT_LEAST_ONCE);
-        mqtt.setWillRetain(true);
-        mqtt.setVersion("3.1.1");
-        mqtt.setConnectAttemptsMax(10);
-        mqtt.setReconnectAttemptsMax(3);
-        mqtt.setReconnectDelay(10);
-        mqtt.setReconnectDelayMax(30000);
-        mqtt.setReconnectBackOffMultiplier(2);
-        mqtt.setReceiveBufferSize(65536);
-        mqtt.setSendBufferSize(65536);
-        mqtt.setTrafficClass(8);
-        mqtt.setMaxReadRate(0);
-        mqtt.setMaxWriteRate(0);
+        return null;
+    }
+
+    public Object downloadData(JSONObject jsonObject) throws Exception {
+        String sendTopic = "application/" + jsonObject.getString("Application") +
+                "/device/" + jsonObject.getString("Deveui") +
+                "/" + jsonObject.getString("Channel");
+        Topic[] sendTopics = {new Topic(sendTopic, QoS.AT_LEAST_ONCE)};
+
+
+        Base64.Encoder encoder = Base64.getEncoder();
+        LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+        linkedHashMap.put("reference", "abcd1234");
+        linkedHashMap.put("confirmed", true);
+        linkedHashMap.put("fPort", 10);
+        linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
+
+        MQTT mqtt = new MQTT();
+        mqttConfig.configure(mqtt);
+        BlockingConnection connection = mqtt.blockingConnection();
+        connection.connect();
+        connection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
+                QoS.EXACTLY_ONCE, true);
+
+        connection.subscribe(sendTopics);
+        Message message = connection.receive();
+        connection.disconnect();
+
+        if (message != null) {
+            return TResult.success();
+        } else {
+            return TResult.failure("publish failed");
+        }
     }
 }

@@ -208,8 +208,6 @@ public class MqttClient {
 //                            });
                 }
             });
-//            while (true) {
-//            }
         } catch (Exception e) {
             e.printStackTrace();
         }

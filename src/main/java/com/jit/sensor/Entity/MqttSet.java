@@ -5,7 +5,7 @@ import org.fusesource.mqtt.client.MQTT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-//@EnableConfigurationProperties(MqttConfigService.class)
+//@EnableConfigurationProperties(MqttConfig.class)
 @Component("mqttset")
 public class MqttSet {
     @Autowired

@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
 <generatorConfiguration>
 
-    <classPathEntry location="C:\Users\11599\.m2\repository\mysql\mysql-connector-java\5.1.40\mysql-connector-java-5.1.40.jar"/>
+    <!--<classPathEntry location="C:\Users\11599\.m2\repository\mysql\mysql-connector-java\5.1.40\mysql-connector-java-5.1.40.jar"/>-->
 
     <context id="context" targetRuntime="MyBatis3">
         <commentGenerator>
@@ -17,20 +17,20 @@
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
 
-        <javaModelGenerator targetPackage="com.jit.sensor.model" targetProject="src/main/java">
+        <javaModelGenerator targetPackage="com.jit.sensor.Entity" targetProject="src/main/java">
             <property name="enableSubPackages" value="false"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
 
-        <sqlMapGenerator targetPackage="com.jit.sensor.mapper" targetProject="src/main/resources">
+        <sqlMapGenerator targetPackage="com.jit.sensor.Mapper" targetProject="src/main/resources">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
 
-        <javaClientGenerator targetPackage="com.jit.sensor.mapper" type="XMLMAPPER" targetProject="src/main/java">
+        <javaClientGenerator targetPackage="com.jit.sensor.Mapper" type="XMLMAPPER" targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
 
-        <table schema="websensor" tableName="" enableCountByExample="false" enableDeleteByExample="false"
+        <table schema="websensor" tableName="ceshi1" enableCountByExample="false" enableDeleteByExample="false"
                enableSelectByExample="false" enableUpdateByExample="false"/>
     </context>
 </generatorConfiguration>

@@ -3,7 +3,7 @@
 <configuration>
 
     <settings>
-        <!-- Globally enables or disables any caches configured in any VedioService.mapper under this configuration -->
+        <!-- Globally enables or disables any caches configured in any VedioService.Mapper under this configuration -->
         <setting name="cacheEnabled" value="false"/>
         <!-- Sets the number of seconds the driver will wait for a response from the database -->
         <setting name="defaultStatementTimeout" value="5"/>
@@ -26,9 +26,9 @@
         </environment>
     </environments>
 <mappers>
-    <!--<mapper resource="com.jit.vedioserver.mapper.TestMapper"/>-->
-<mapper resource="com.jit.sensor.mapper.SensordataMapper"/>
-<mapper resource="com.jit.sensor.mapper.SensorinfoMapper"/>
+    <!--<Mapper resource="com.jit.vedioserver.Mapper.TestMapper"/>-->
+    <mapper resource="com.jit.sensor.Mapper.SensordataMapper"/>
+    <mapper resource="com.jit.sensor.Mapper.SensorinfoMapper"/>
 </mappers>
     <!-- Continue editing here -->
 

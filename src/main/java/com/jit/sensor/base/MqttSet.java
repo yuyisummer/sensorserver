@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-//@EnableConfigurationProperties(MqttConfig.class)
+//@EnableConfigurationProperties(MqttConfigService.class)
 @Component("mqttset")
 public class MqttSet {
     @Autowired

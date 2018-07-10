@@ -5,7 +5,7 @@ import org.fusesource.mqtt.client.QoS;
 
 import java.net.URISyntaxException;
 
-public class MqttConfig {
+public class MqttConfigService {
 
     public void configure(MQTT mqtt) throws URISyntaxException {
 

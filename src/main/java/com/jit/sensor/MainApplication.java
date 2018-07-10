@@ -22,8 +22,8 @@ public class MainApplication {
     public static void main(String args[]) {
       //  SpringApplication.run(MainApplication.class, args);
         ConfigurableApplicationContext applicationContext = SpringApplication.run(MainApplication.class, args);
-        MqttClient mqttClient = new MqttClient(applicationContext);
         new AnalysisNeedData().setApplicationContext(applicationContext);
+        MqttClient mqttClient = new MqttClient(applicationContext);
         mqttClient.init();
     }
 }

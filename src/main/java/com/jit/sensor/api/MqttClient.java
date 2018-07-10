@@ -13,6 +13,7 @@ import org.fusesource.hawtdispatch.Dispatch;
 import org.fusesource.mqtt.client.*;
 import org.fusesource.mqtt.codec.MQTTFrame;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -50,6 +51,10 @@ public class MqttClient {
         return false;
     }
 
+    public static MqttSet getMqttSet() {
+        return (MqttSet) applicationContext.getBean(MqttSet.class);
+    }
+
     public void init() {
         try {
             mqttSet.builder();
@@ -62,7 +67,7 @@ public class MqttClient {
             mqtt.setTracer(new Tracer() {
                 @Override
                 public void onReceive(MQTTFrame frame) {
-                    System.out.println("recv: " + frame);
+//                    System.out.println("recv: " + frame);
                 }
 
                 @Override
@@ -72,12 +77,12 @@ public class MqttClient {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    System.out.println("send: " + frame);
+//                    System.out.println("send: " + frame);
                 }
 
                 @Override
                 public void debug(String message, Object... args) {
-                    System.out.println(String.format("debug: " + message, args));
+//                    System.out.println(String.format("debug: " + message, args));
                 }
             });
 
@@ -182,12 +187,12 @@ public class MqttClient {
 
 
                     // 发布消息
-                    Base64.Encoder encoder = Base64.getEncoder();
-                    LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
-                    linkedHashMap.put("reference", "abcd1234");
-                    linkedHashMap.put("confirmed", true);
-                    linkedHashMap.put("fPort", 10);
-                    linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
+//                    Base64.Encoder encoder = Base64.getEncoder();
+//                    LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+//                    linkedHashMap.put("reference", "abcd1234");
+//                    linkedHashMap.put("confirmed", true);
+//                    linkedHashMap.put("fPort", 10);
+//                    linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
 //                    callbackConnection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
 //                            QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
 //                                @Override
@@ -211,10 +216,6 @@ public class MqttClient {
             e.printStackTrace();
         }
 
-    }
-
-    public MqttSet getMqttSet() {
-        return (MqttSet) applicationContext.getBean(MqttSet.class);
     }
 
     public SensordataService getSensordataService() {

@@ -8,7 +8,7 @@ public enum TResultCode {
     /*失败状态码
      * 1000-2000
      * */
-    SUBSCRIPTION_EXISTS(1000, "频道已订阅");
+    SUBSCRIPTION_EXISTS(1000, "添加频道失败，频道已订阅");
 
     /*
      * 成功状态码

@@ -36,7 +36,6 @@ public class MqttConfigService {
         topicSet.add(new Topic(recvTopic, QoS.EXACTLY_ONCE));
         System.out.println("topiclist.size\t" + topicSet.size());
         Topic[] newTopics = topicSet.toArray(new Topic[topicSet.size()]);
-        MqttClient.topics = topicSet.toArray(new Topic[topicSet.size()]);
         for (Topic newTopic : newTopics) {
             System.out.println("newTopic\t" + newTopic);
         }
@@ -44,22 +43,23 @@ public class MqttConfigService {
         if (Arrays.equals(newTopics, MqttClient.topics)) {
             return TResult.failure(TResultCode.SUBSCRIPTION_EXISTS);
         } else {
+            /**
+             * TODO ： Retained message 遗留问题
+             * */
             callbackConnection.subscribe(newTopics,
                     new Callback<byte[]>() {
-                        // 订阅主题成功
                         @Override
-                        public void onSuccess(byte[] qoses) {
-                            System.out.println("========订阅成功=======");
+                        public void onSuccess(byte[] bytes) {
+                            MqttClient.topics = topicSet.toArray(new Topic[topicSet.size()]);
+                            System.out.println("\t订阅成功");
                         }
 
-                        // 订阅主题失败
                         @Override
-                        public void onFailure(Throwable value) {
-                            System.out.println("========订阅失败=======\t" + value);
-                            callbackConnection.disconnect(null);
+                        public void onFailure(Throwable throwable) {
+                            System.out.println("\t订阅失败");
                         }
                     });
-            return TResult.success("频道订阅成功");
+            return TResult.success();
         }
     }
 

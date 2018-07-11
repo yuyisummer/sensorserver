@@ -1,15 +1,15 @@
 package com.jit.sensor.Controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.jit.sensor.Util.AnalysisNeedData;
-import com.jit.sensor.Util.FindSensorInfo;
-import com.jit.sensor.Util.ReturnStr;
-import com.jit.sensor.Util.ReturnUtil;
 import com.jit.sensor.Entity.Sensorinfo;
 import com.jit.sensor.Entity.TMessage;
 import com.jit.sensor.Entity.Universaldata;
 import com.jit.sensor.Service.SensorInfoService;
 import com.jit.sensor.Service.UniversalDataService;
+import com.jit.sensor.Util.AnalysisNeedData;
+import com.jit.sensor.Util.FindSensorInfo;
+import com.jit.sensor.Util.ReturnStr;
+import com.jit.sensor.Util.ReturnUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class SensorInfo {
         }
         Universaldata universaldata = null;
 
-        universaldata = universalDataService.SelectLastData(deveui, devtype);
+        universaldata = universalDataService.selectLastData(deveui, devtype);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String sd = sdf.format(new Date(Long.parseLong(universaldata.getTime()))); // 时间戳转换日期
         System.out.println(sd);

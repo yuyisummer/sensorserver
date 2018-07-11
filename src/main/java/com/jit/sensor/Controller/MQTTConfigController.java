@@ -18,20 +18,29 @@ public class MQTTConfigController {
 
     @PostMapping("/subscription")
     public Object addSubscription(@RequestBody JSONObject jsonObject) {
-        return mqttConfigService.uploadData(jsonObject);
+        return mqttConfigService.addSubscription(jsonObject);
     }
 
-    @GetMapping("/subscribtion")
-    public Object updateSubscribtion(@RequestParam("Topic") String topic) {
+    /**
+     * TODO:获得频道
+     */
+    @GetMapping("/subscription")
+    public Object getSubscribtion(@RequestParam("Topic") String topic) {
         return null;
     }
 
-    @PutMapping("/subscribtion")
+    /**
+     * TODO：更新频道信息
+     */
+    @PutMapping("/subscription")
     public Object updateSubcribtion(@RequestBody JSONObject jsonObject) {
         return null;
     }
 
-    @DeleteMapping("/subscribtion")
+    /**
+     * TODO：取消订阅频道
+     */
+    @DeleteMapping("/subscription")
     public Object deleteSubscribtion(@RequestBody JSONObject jsonObject) {
         return null;
     }

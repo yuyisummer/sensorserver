@@ -7,7 +7,7 @@ import java.net.URISyntaxException;
 
 public class MqttConfig {
 
-    public void configure(MQTT mqtt) throws URISyntaxException {
+    public MQTT configure(MQTT mqtt) throws URISyntaxException {
 
         mqtt.setHost("tcp://39.106.54.222:1883");
         mqtt.setClientId("876543211");
@@ -30,5 +30,7 @@ public class MqttConfig {
         mqtt.setTrafficClass(8);
         mqtt.setMaxReadRate(0);
         mqtt.setMaxWriteRate(0);
+
+        return mqtt;
     }
 }

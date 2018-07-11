@@ -15,11 +15,13 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableScheduling
 @EnableSwagger2
 public class MainApplication {
-    public static void main(String args[]) {
+    public static MqttClient mqttClient;
+
+    public static void main(String args[]) throws Exception {
       //  SpringApplication.run(MainApplication.class, args);
         ConfigurableApplicationContext applicationContext = SpringApplication.run(MainApplication.class, args);
         new AnalysisNeedData().setApplicationContext(applicationContext);
-        MqttClient mqttClient = new MqttClient(applicationContext);
+        mqttClient = new MqttClient(applicationContext);
         mqttClient.init();
     }
 }

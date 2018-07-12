@@ -36,7 +36,6 @@ public class MqttClient {
     private MqttSet mqttSet;
     private Boolean isConnected;
 
-
     public MqttClient(ApplicationContext context) {
         applicationContext = context;
         sensordataService = getSensordataService();

@@ -63,9 +63,10 @@ public class MqttConfigService {
         }
     }
 
-    /*
+    /**
      *  线程阻塞，返回结果给前端
      * */
+
     public Object downloadData(JSONObject jsonObject) throws Exception {
         String sendTopic = "application/" + jsonObject.getString("Application") +
                 "/device/" + jsonObject.getString("Deveui") +

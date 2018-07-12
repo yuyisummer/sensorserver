@@ -92,6 +92,7 @@ public class MqttClient {
 //                                    + new String(payload.toByteArray()));
 
                 String bugString = "chy";
+                System.out.println(topic);
                 if (!bugString.equals(new String(payload.toByteArray()))) {
                     //获取数据
                     JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));

@@ -1,6 +1,8 @@
 package com.jit.sensor.base;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.jit.sensor.base.utils.AnalysisNeedData;
 import com.jit.sensor.base.utils.FindSensorData;
 import com.jit.sensor.model.DataInfo;
@@ -12,6 +14,7 @@ import com.jit.sensor.service.UniversalDataService;
 import io.netty.handler.codec.json.JsonObjectDecoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisKeyValueTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -32,8 +35,10 @@ public class TestTask {
 
     @Autowired
     private RedisKeyValueTemplate rkvt;
+    @Autowired
+    private StringRedisTemplate strRedis;
     static long nowtime = Long.valueOf("1530970380000");// new Date().getTime();
-    private  static  int k =0;
+    private static int k = 0;
 
     //0 0/3 * * * ?
     // @Scheduled(cron = "0 0 0/1 * * ?")
@@ -42,24 +47,24 @@ public class TestTask {
         System.out.println("now time is " + df.format(new Date()));
         //  long nowtime =Long.valueOf("1530951760000") ;// new Date().getTime();
 
-        long lasttime = nowtime -86400000;
+        // long lasttime = nowtime -86400000;
+        long lasttime = nowtime - 3600000;
 //        if(lasttime < Long.valueOf("1530950400000"))
 //            return;
 
-        if(k>5)
-           return;
+        if (k > 6)
+            return;
         Map<String, List<DataInfo>> datainfomap = new HashMap<>();
-        Map<String,qiuzhi> averagemap = new HashMap<>();
-
-
+        Map<String, qiuzhi> averagemap = new HashMap<>();
 
 
         UniversalDataService universalDataService = AnalysisNeedData.getBean(UniversalDataService.class);
         List<Universaldata> list = universalDataService.SelectIntervalData(String.valueOf(nowtime), String.valueOf(lasttime));
         IdtoTimeService idtoTimeService = AnalysisNeedData.getBean(IdtoTimeService.class);
         int id = idtoTimeService.selectMaxId();
+        id = id+1;
         Idtodate idtodate = new Idtodate();
-        idtodate.setId(id + 1);
+        idtodate.setId(id );
         idtodate.setDate(String.valueOf(nowtime));
         if (idtoTimeService.Insert(idtodate)) {
             System.out.println("id与当前自动执行redis操作时间成功");
@@ -76,7 +81,7 @@ public class TestTask {
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 if (entry.getKey().equals("all") || entry.getKey().equals("Remove"))
                     continue;
-                String key2 =  universaldata.getDeveui() + "-" + universaldata.getDevtype() +"-" ;
+                String key2 = universaldata.getDeveui() + "-" + universaldata.getDevtype() + "-";
                 String key = key2 + id;
 
                 DataInfo dataInfo = new DataInfo();
@@ -85,20 +90,20 @@ public class TestTask {
                 List<DataInfo> list1 = null;
                 list1 = datainfomap.get(key);
 
-                qiuzhi q =null;
-                System.out.println("79:entry.getKey:"+entry.getKey());
-                q = averagemap.get(key2+entry.getKey());
+                qiuzhi q = null;
+                System.out.println("79:entry.getKey:" + entry.getKey());
+                q = averagemap.get(key2 + entry.getKey());
 
-                if(q!=null){
-                    q .setInfonum(q.getInfonum()+1);
-                    q.setInfosum( (q.getInfosum()+jsonObject.getDouble(entry.getKey())));
-                    averagemap.put(key2+entry.getKey(),q);
-                }else {
+                if (q != null) {
+                    q.setInfonum(q.getInfonum() + 1);
+                    q.setInfosum((q.getInfosum() + jsonObject.getDouble(entry.getKey())));
+                    averagemap.put(key2 + entry.getKey(), q);
+                } else {
                     q = new qiuzhi();
                     q.setInfonum(1);
                     q.setInfosum(jsonObject.getDouble(entry.getKey()));
-                    averagemap.put(key2+entry.getKey(),q);
-                  //  System.out.println("91:averagemap.put:"+entry.getKey()+" "+q);
+                    averagemap.put(key2 + entry.getKey(), q);
+                    //  System.out.println("91:averagemap.put:"+entry.getKey()+" "+q);
                 }
 
                 if (list1 != null) {
@@ -113,6 +118,7 @@ public class TestTask {
         }
         System.out.println("ceshi:" + datainfomap.size());
         System.out.println("list数组遍历结束\n\n\n");
+        Map<String, Double> mapcunfang = new HashMap<>();
 
         for (Map.Entry<String, List<DataInfo>> entry : datainfomap.entrySet()) {
             ListDataInfo listDataInfo = new ListDataInfo();
@@ -124,31 +130,60 @@ public class TestTask {
             LinkedList<Double> average = new LinkedList<>();
 
             String[] str = entry.getKey().split("-");
-            String key = str[0]+"-"+str[1];
-            System.out.println("当前准备存放的是哪个板子的哪个传感器:"+key);
+            String key = str[0] + "-" + str[1];
+            System.out.println("当前准备存放的是哪个板子的哪个传感器:" + key);
 
-            for(Map.Entry<String,qiuzhi> entry1:averagemap.entrySet()){
-                    if(entry1.getKey().indexOf(key)<0)
-                        continue;
-                    averagename.add(entry1.getKey());
-                    qiuzhi q =  entry1.getValue();
-                    average.add(q.getInfosum()/q.getInfonum());
-                    System.out.println("值："+entry1.getKey()+" 平均:"+(q.getInfosum()/q.getInfonum()));
-                    System.out.println("和为:"+q.getInfosum());
-                System.out.println("个数为:"+q.getInfonum());
+            for (Map.Entry<String, qiuzhi> entry1 : averagemap.entrySet()) {
+                if (entry1.getKey().indexOf(key) < 0) {
+                    System.out.println(entry1.getKey() + " - " + key);
+                    continue;
+                }
+                averagename.add(entry1.getKey());
+                qiuzhi q = entry1.getValue();
+               // average.add(q.getInfosum() / q.getInfonum());
+                //  mapcunfang.put(entry1.getKey().split("-")[2],(q.getInfosum()/q.getInfonum()));
+                System.out.println("值：" + entry1.getKey() + " 平均:" + (q.getInfosum() / q.getInfonum()));
+                System.out.println("和为:" + q.getInfosum());
+
+                JSONObject jsonObject =  FindSensorData.getCfData(entry1.getKey());
+                System.out.println("系数因子："+jsonObject.toJSONString());
+                Map<String,Map<String,Double> >it = JSON.parseObject(jsonObject.toJSONString(),new TypeReference<Map<String,Map<String,Double>>>(){});
+                System.out.println("map<String,Double> :"+JSONObject.toJSONString(it));
+                Map<String,Double> it1 = it.get(entry1.getKey());
+                for(Map.Entry<String,Double> entry2:it1.entrySet()){
+                    average.add(q.getInfosum() / q.getInfonum()*entry2.getValue());
+                }
+
+              //  average.add(q.getInfosum() / q.getInfonum());
+                System.out.println("个数为:" + q.getInfonum());
+                it = null;
+
             }
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("averagename",averagename);
-            jsonObject.put("average",average);
-            jsonObject.put ("datalist",entry.getValue());
-            listDataInfo.setList(jsonObject.toJSONString());
+            System.out.println("average.size:"+average.size());
+            for (int i = 0; i < average.size(); i++) {
+                System.out.println("i:"+i);
+                System.out.println("averagename.get(i):"+averagename.get(i));
+                System.out.println("average.get(i):"+average.get(i));
+                mapcunfang.put(averagename.get(i).split("-")[2], average.get(i));
+            }
+            //   jsonObject.put("averagename",averagename);
+            //   jsonObject.put("average",average);
+            jsonObject.put("value", mapcunfang);
+            jsonObject.put("datalist", entry.getValue());
+            //listDataInfo.setList(jsonObject.toJSONString());
+           // System.out.println(jsonObject.toJSONString());
+         //   rkvt.insert(entry.getKey(), listDataInfo);
+            strRedis.opsForValue().set(entry.getKey(),jsonObject.toJSONString());
+            mapcunfang = null;
+            mapcunfang = new HashMap<>();
 
-            rkvt.insert(entry.getKey(), listDataInfo);
             System.out.println("插入数据");
         }
         System.out.println("redis存放结束");
         datainfomap = null;
-        nowtime -= 86400000;
+        mapcunfang = null;
+        nowtime -= 3600000;
         k++;
     }
 
@@ -176,7 +211,7 @@ public class TestTask {
         return bytes;
     }
 
-    class qiuzhi{
+    class qiuzhi {
         public int getInfonum() {
             return infonum;
         }
@@ -192,6 +227,7 @@ public class TestTask {
         public void setInfosum(Double infosum) {
             this.infosum = infosum;
         }
+
         int infonum;
         Double infosum;
     }

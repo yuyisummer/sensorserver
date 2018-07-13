@@ -58,4 +58,11 @@ public interface UniversaldataMapper {
     Universaldata selectLastInfo(@Param("deveui")String deveui ,@Param("devtype") String devtype);
 
     List<Universaldata> selectIntervalData(@Param("nowtime")String nowtime,@Param("lasttime")String lasttime);
+
+    List<Universaldata> selectCusomizeData (@Param("nowtime")String nowtime,
+                                            @Param("lasttime")String lasttime,
+                                            @Param("deveui") String deveui,
+                                            @Param("devtype") String devtype);
+
+
 }

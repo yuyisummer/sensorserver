@@ -24,4 +24,8 @@ public class UniversalDataService {
     public List<Universaldata> SelectIntervalData(String nowtime,String lasttime){
         return  universaldataMapper.selectIntervalData(nowtime,lasttime);
     }
+
+    public List<Universaldata> selectCusomizeData(String nowtime,String lasttime,String deveui,String devtype){
+        return  universaldataMapper.selectCusomizeData(nowtime,lasttime,deveui,devtype);
+    }
 }

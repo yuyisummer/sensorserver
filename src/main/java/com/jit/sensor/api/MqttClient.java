@@ -5,10 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.base.MqttSet;
 import com.jit.sensor.base.socket.MessageTransfer;
 import com.jit.sensor.base.socket.MyWebsocket;
+import com.jit.sensor.base.utils.AnalysisNeedData;
 import com.jit.sensor.model.Sensordata;
 import com.jit.sensor.model.Universaldata;
 import com.jit.sensor.service.SensordataService;
 import com.jit.sensor.service.UniversalDataService;
+import io.netty.handler.codec.base64.Base64Decoder;
 import io.netty.handler.codec.base64.Base64Encoder;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
@@ -27,6 +29,7 @@ import sun.misc.BASE64Decoder;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 
@@ -36,31 +39,34 @@ import java.util.Random;
 public class MqttClient {
     //  public static void main(String[] args) {
 
+    private static ApplicationContext applicationContext;//启动类set入，调用下面set方法
     //  @Autowired
     MqttSet mqttSet;
-    String topic = "application/2/device/004a770066003289/rx";
 
-    // String topic = "application/2/device/004a7700660033d9/rx";
-
+    // String recvTopic = "application/2/device/004a7700660033d9/rx";
+    String recvTopic = "application/2/device/004a770066003289/rx";
+    String sendTopic = "application/2/device/004a770066003289/tx";
     SensordataService sensordataService;
     UniversalDataService universalDataService;
 
-
     public MqttClient(ApplicationContext context) {
-        this.applicationContext = context;
+        applicationContext = context;
         sensordataService = getSensordataService();
         mqttSet = getMqttSet();
         universalDataService = getUniversalDataService();
     }
 
+    public static void setApplicationContext(ApplicationContext context) {
+        applicationContext = context;
+    }
+
     public void init() {
         try {
-
-
             mqttSet.builder();
             MQTT mqtt = mqttSet.getMqtt();
             // 选择消息分发队列
-            mqtt.setDispatchQueue(Dispatch.createQueue("foo"));// 若没有调用方法setDispatchQueue，客户端将为连接新建一个队列。如果想实现多个连接使用公用的队列，显式地指定队列是一个非常方便的实现方法
+            mqtt.setDispatchQueue(Dispatch.createQueue("fol"));
+            // 若没有调用方法setDispatchQueue，客户端将为连接新建一个队列。如果想实现多个连接使用公用的队列，显式地指定队列是一个非常方便的实现方法
 
             // 设置跟踪器
             mqtt.setTracer(new Tracer() {
@@ -71,6 +77,11 @@ public class MqttClient {
 
                 @Override
                 public void onSend(MQTTFrame frame) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     System.out.println("send: " + frame);
                 }
 
@@ -83,7 +94,6 @@ public class MqttClient {
             // 使用回调式API
             final CallbackConnection callbackConnection = mqtt
                     .callbackConnection();
-
             // 连接监听
             callbackConnection.listener(new Listener() {
 
@@ -91,29 +101,16 @@ public class MqttClient {
                 @Override
                 public void onPublish(UTF8Buffer topic, Buffer payload,
                                       Runnable onComplete) {
-                    System.out.println("topic：" + topic.toString());
-                    System.out
-                            .println("=============receive msg================"
-                                    + new String(payload.toByteArray()));
-                    System.out.println("ceshi MQTT:" + new String(payload.toByteArray()));
+//                    System.out
+//                            .println("=============receive msg================"
+//                                    + new String(payload.toByteArray()));
 
-                    try {
-                        System.out.println("sendMessage");
-                        MyWebsocket.sendMessage(new String(payload.toByteArray()));
-                        System.out.println("ceshi");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    // System.out.println("ceshi MQTT:"+new String(payload.toByteArray()));
-
-                    //获取数据
-                    if (new String(payload.toByteArray()).equals("chy")) {
-                        System.out.println("ssss");
-                    } else {
+                    String bugString = "chy";
+                    if (!bugString.equals(new String(payload.toByteArray()))) {
+                        //获取数据
                         JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
+                        System.out.println(jsonObject);
                         Sensordata sensordata = new Sensordata();
-
 
                         String data1 = null;
                         data1 = jsonObject.getString("data");
@@ -121,25 +118,36 @@ public class MqttClient {
                         if (data1 != null) {
                             Universaldata universaldata = new Universaldata();
                             universaldata.setDeveui(jsonObject.getString("devEUI"));
+                            byte[] decode = new byte[0];
                             try {
-                                byte[] decode = decoder.decodeBuffer(data1);
-                                System.out.println("decode:" + decode[0]);
-                                universaldata.setDevtype(String.valueOf(decode[0]));
+                                decode = decoder.decodeBuffer(data1);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+                            System.out.println("decode:" + decode[0]);
+                            universaldata.setDevtype(String.valueOf(decode[0]));
                             universaldata.setData(data1);
-                            universaldata.setTime(String.valueOf(new Date().getTime()));
+                            universaldata.setTime(String.valueOf(System.currentTimeMillis()));
+
+                            //websocket发送
+                            try {
+
+                                MyWebsocket.sendMessage(AnalysisNeedData.getWebSocketData(universaldata).toString());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
 
                             if (universalDataService.insertdata(universaldata)) {
                                 System.out.println("传感器数据插入成功");
                             } else {
                                 System.out.println("传感器数据插入失败");
                             }
+
+
                         }
-
-
                     }
+
                     onComplete.run();
                 }
 
@@ -169,65 +177,76 @@ public class MqttClient {
             callbackConnection.connect(new Callback<Void>() {
 
                 // 连接失败
+                @Override
                 public void onFailure(Throwable value) {
                     System.out.println("============连接失败："
                             + value.getLocalizedMessage() + "============");
                 }
 
                 // 连接成功
+                @Override
                 public void onSuccess(Void v) {
                     // 订阅主题
 
-                    Topic[] topics = {new Topic(topic, QoS.AT_LEAST_ONCE)};
-                    System.out.println("length:" + topics.length);
-                    callbackConnection.subscribe(topics,
+                    Topic[] recvTopics = {new Topic(recvTopic, QoS.AT_LEAST_ONCE)};
+                    System.out.println("length:" + recvTopics.length);
+                    callbackConnection.subscribe(recvTopics,
                             new Callback<byte[]>() {
                                 // 订阅主题成功
+                                @Override
                                 public void onSuccess(byte[] qoses) {
                                     System.out.println("========订阅成功=======");
                                 }
 
                                 // 订阅主题失败
+                                @Override
                                 public void onFailure(Throwable value) {
                                     System.out.println("========订阅失败=======");
                                     callbackConnection.disconnect(null);
                                 }
                             });
 
+
                     // 发布消息
-                    //    callbackConnection.publish("YJH_ceshi",("Hello ").getBytes(),
-                    callbackConnection.publish("foo", ("**ello ").getBytes(),
-                            QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
-                                //  QoS.AT_MOST_ONCE, true, new Callback<Void>() {
-                                public void onSuccess(Void v) {
-                                    System.out
-                                            .println("===========消息发布成功============");
-                                }
-
-                                public void onFailure(Throwable value) {
-                                    System.out.println("========消息发布失败=======201");
-                                    callbackConnection.disconnect(null);
-                                }
-                            });
-
+                    //Topic[] sendTopics = {new Topic(sendTopic, QoS.AT_LEAST_ONCE)};
+//                    Base64.Encoder encoder = Base64.getEncoder();
+//                    LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+//                    linkedHashMap.put("reference", "abcd1234");
+//                    linkedHashMap.put("confirmed", true);
+//                    linkedHashMap.put("fPort", 10);
+//                    linkedHashMap.put("data", new String(encoder.encode("send by chy".getBytes())));
+//                    callbackConnection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
+//                            QoS.AT_LEAST_ONCE, true, new Callback<Void>() {
+//                                @Override
+//                                public void onSuccess(Void v) {
+//                                    System.out
+//                                            .println("===========消息发布成功============");
+//                                }
+//
+//                                @Override
+//                                public void onFailure(Throwable value) {
+//                                    System.out.println("========消息发布失败=======");
+//                                    System.out.println("value\t" + value);
+//                                    callbackConnection.disconnect(this);
+//                                }
+//                            });
                 }
             });
-            while (true) {
-            }
+//            while (true) {
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    private static ApplicationContext applicationContext;//启动类set入，调用下面set方法
-
-    public static void setApplicationContext(ApplicationContext context) {
-        applicationContext = context;
+    public static boolean publishData(String string) {
+        return false;
     }
 
     public MqttSet getMqttSet() {
-        return (MqttSet) applicationContext.getBean(MqttSet.class);
+       // return (MqttSet) applicationContext.getBean(MqttSet.class);
+        return  AnalysisNeedData.getBean(MqttSet.class);
     }
 
     public SensordataService getSensordataService() {

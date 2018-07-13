@@ -1,6 +1,5 @@
 package com.jit.sensor.mapper;
 
-import com.jit.sensor.api.SensorInfo;
 import com.jit.sensor.model.Sensorinfo;
 import com.jit.sensor.model.SensorinfoKey;
 import org.apache.ibatis.annotations.Param;

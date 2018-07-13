@@ -25,8 +25,8 @@ public class SensorProfile {
 
 
     @ApiOperation(value="插入传感器配置文件", notes="通过解析JSONObject转为对象插入数据库中")
-    @PostMapping("insertprofile")
-    @ApiParam(value ="json", required = true,example ="123")
+    @PostMapping(value = "insertprofile")
+ //   @ApiParam(value ="json", required = true,example ="123")
 //    public String InsertProfile(@RequestBody  JSONObject json){
 
     public String InsertProfile(@RequestBody Sensorinfo sensorinfo){

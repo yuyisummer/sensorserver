@@ -109,8 +109,12 @@ public class MqttConfigService {
     public Object downloadData(JSONObject jsonObject) throws Exception {
         String sendTopic = "application/" + jsonObject.getString("Application") +
                 "/device/" + jsonObject.getString("Deveui") +
-                "/" + jsonObject.getString("Channel");
-        Topic[] sendTopics = {new Topic(sendTopic, QoS.EXACTLY_ONCE)};
+                "/" + jsonObject.getString("sendChannel");
+
+        String ackTopic = "application/" + jsonObject.getString("Application") +
+                "/device/" + jsonObject.getString("Deveui") +
+                "/" + jsonObject.getString("ackChannel");
+        Topic[] sendTopics = {new Topic(ackTopic, QoS.EXACTLY_ONCE)};
 
 
         Base64.Encoder encoder = Base64.getEncoder();
@@ -133,14 +137,13 @@ public class MqttConfigService {
                 QoS.EXACTLY_ONCE, false);
 
         Message message = connection.receive();
-        System.out.println(message.getPayload());
-
-        if (jsonObject.getString(messageKey).equals(new String(message.getPayload()))) {
-            return TResult.failure("publish failed");
+        Base64.Decoder decoder = Base64.getDecoder();
+        byte[] decodedData = decoder.decode(message.getPayload());
+        if (decodedData[0] == 0 && decodedData[1] == 0) {
+            return TResult.success();
         } else {
-            return TResult.success("publish success");
+            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
         }
-
     }
 
     /**

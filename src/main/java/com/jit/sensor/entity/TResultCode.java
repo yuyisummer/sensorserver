@@ -10,12 +10,8 @@ public enum TResultCode {
      * */
     SUBSCRIPTION_EXISTS(1000, "添加频道失败，频道已订阅"),
     UNSUBSCRIPTION_NOT_EXISTS(1001, "频道未订阅，取消订阅失败"),
-    SUBSCRIPTION_EMPTY(1002, "频道为空");
-
-    /*
-     * 成功状态码
-     * 2000-3000
-     * */
+    SUBSCRIPTION_EMPTY(1002, "频道为空"),
+    DOWNLOADDATA_BROKEN(1003, "下行数据未接收到或有误");
 
     private Integer code;
 

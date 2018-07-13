@@ -61,7 +61,7 @@ public class SensorInfo {
             }
 
 
-            AnalysisNeedData.SetNeedData(key, map);
+            AnalysisNeedData.setNeedData(key, map);
         }
         Universaldata universaldata = null;
 

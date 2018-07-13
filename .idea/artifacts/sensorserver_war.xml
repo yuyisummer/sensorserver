@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="sensorserver:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="sensor-server-1.0-SNAPSHOT.war">
+      <element id="artifact" artifact-name="sensorserver:war exploded" />
+    </root>
+  </artifact>
+</component>

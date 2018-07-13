@@ -97,8 +97,8 @@ public class MqttClient {
                 System.out.println("payload " + new String(payload.toByteArray()));
 //                if (!bugString.equals(new String(payload.toByteArray()))) {
                 //获取数据
-                    JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
-                    System.out.println("jsonobject\t" + jsonObject);
+                JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
+                System.out.println("jsonobject\t" + jsonObject);
                 switch (jsonObject.getString("devEUI")) {
                     case "004a770066003289": {
                         break;
@@ -108,25 +108,25 @@ public class MqttClient {
                 }
 
                 String data1;
-                    data1 = jsonObject.getString("data");
-                    Decoder decoder = Base64.getDecoder();
-                    if (data1 != null) {
-                        Universaldata universaldata = new Universaldata();
-                        universaldata.setDeveui(jsonObject.getString("devEUI"));
-                        byte[] decode = decoder.decode(data1);
-                        System.out.println("decode\t" + decode[0]);
-                        universaldata.setDevtype(String.valueOf(decode[0]));
-                        universaldata.setData(data1);
-                        universaldata.setTime(String.valueOf(System.currentTimeMillis()));
+                data1 = jsonObject.getString("data");
+                Decoder decoder = Base64.getDecoder();
+                if (data1 != null) {
+                    Universaldata universaldata = new Universaldata();
+                    universaldata.setDeveui(jsonObject.getString("devEUI"));
+                    byte[] decode = decoder.decode(data1);
+                    System.out.println("decode\t" + decode[0]);
+                    universaldata.setDevtype(String.valueOf(decode[0]));
+                    universaldata.setData(data1);
+                    universaldata.setTime(String.valueOf(System.currentTimeMillis()));
 
                         System.out.println("解析完的数据" + AnalysisNeedData.getWebSocketData(universaldata).toString());
-                        //                            MyWebsocket.sendMessage(AnalysisNeedData.getWebSocketData(universaldata).toString());
+//                    MyWebsocket.sendMessage(AnalysisNeedData.getWebSocketData(universaldata).toString());
                         if (universalDataService.insertdata(universaldata)) {
                             System.out.println("传感器数据插入成功");
                         } else {
                             System.out.println("传感器数据插入失败");
                         }
-                    }
+                }
 //                }
                 onComplete.run();
             }

@@ -18,9 +18,10 @@ public class AnalysisNeedData implements ApplicationContextAware {
     private static Map<String, Map<String, String>> needdatalist =
             new HashMap<String, Map<String, String>>() {
             };
-    private static ApplicationContext applicationContext;//启动类set入，调用下面set方法
+    //启动类set入，调用下面set方法
+    private static ApplicationContext applicationContext;
 
-    public static void SetNeedData(String str, Map<String, String> map) {
+    public static void setNeedData(String str, Map<String, String> map) {
         needdatalist.put(str, map);
     }
 
@@ -28,19 +29,17 @@ public class AnalysisNeedData implements ApplicationContextAware {
         return needdatalist.get(str);
     }
 
-    public static LinkedHashMap<String, String> toMap(String jsonobject) {
-        LinkedHashMap<String, String> map = JSON.parseObject(jsonobject, LinkedHashMap.class);
-        return map;
-
+    public static LinkedHashMap toMap(String string) {
+        return JSON.parseObject(string, LinkedHashMap.class);
     }
 
     public static char[] bytesToHexString(byte[] src) {
-        String stringBuilder = new String("");
+        String stringBuilder = "";
         if (src == null || src.length <= 0) {
             return null;
         }
-        for (int i = 0; i < src.length; i++) {
-            int v = src[i] & 0xFF;
+        for (byte aSrc : src) {
+            int v = aSrc & 0xFF;
             String hv = Integer.toHexString(v);
             if (hv.length() < 2) {
                 hv = "0" + hv;
@@ -48,8 +47,8 @@ public class AnalysisNeedData implements ApplicationContextAware {
             stringBuilder = stringBuilder + hv;
         }
         System.out.println("stringbuilder:" + stringBuilder);
-        char[] list = stringBuilder.toCharArray();
-        return list; //将字符串变量转换为字符数组
+        //将字符串变量转换为字符数组
+        return stringBuilder.toCharArray();
     }
 
     public static String getDataUnit(String key) {
@@ -87,10 +86,11 @@ public class AnalysisNeedData implements ApplicationContextAware {
     }
 
     public static TMessage getWebSocketData(Universaldata universaldata) {
-        Map<String, String> map = FindSensorData.GetSensorInfoMap(universaldata.getDeveui(), universaldata.getDevtype());
+        Map<String, String> map = FindSensorData.getSensorInfoMap(universaldata.getDeveui(), universaldata.getDevtype());
         String mainkey = universaldata.getDeveui() + "-" + universaldata.getDevtype() + "-";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sd = sdf.format(new Date(Long.parseLong(universaldata.getTime()))); // 时间戳转换日期
+        // 时间戳转换日期
+        String sd = sdf.format(new Date(Long.parseLong(universaldata.getTime())));
         System.out.println(sd);
         JSONObject retjson = new JSONObject();
 

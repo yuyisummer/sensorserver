@@ -1,11 +1,9 @@
 package com.jit.sensor.controller;
 
-
 import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.service.MqttConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 
 /**
  * @author chy

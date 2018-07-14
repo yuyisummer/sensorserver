@@ -100,13 +100,6 @@ public class MqttClient {
                 //获取数据
                 JSONObject jsonObject = JSON.parseObject(new String(payload.toByteArray()));
                 System.out.println("jsonobject\t" + jsonObject);
-                switch (jsonObject.getString("devEUI")) {
-                    case "004a770066003289": {
-                        break;
-                    }
-                    default:
-                        break;
-                }
 
                 String data1;
                 data1 = jsonObject.getString("data");

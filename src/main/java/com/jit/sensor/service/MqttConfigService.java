@@ -6,6 +6,7 @@ import com.jit.sensor.entity.TResult;
 import com.jit.sensor.entity.TResultCode;
 import com.jit.sensor.global.MqttClient;
 import com.jit.sensor.util.MqttConfig;
+import com.jit.sensor.util.TrainsformUtil;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class MqttConfigService {
      * 下发数据,线程阻塞
      */
     private int clientIdOffset = 1;
+    private int maxOffset = 100;
 
     /**
      * 添加订阅
@@ -118,39 +120,36 @@ public class MqttConfigService {
         Topic[] ackTopics = {new Topic(ackTopic, QoS.EXACTLY_ONCE)};
 
 
-        Base64.Encoder encoder = Base64.getEncoder();
         LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
         linkedHashMap.put("reference", jsonObject.getString("reference"));
         linkedHashMap.put("confirmed", jsonObject.getString("confirmed"));
         linkedHashMap.put("fPort", jsonObject.getString("fPort"));
         String messageKey = "message";
-//        linkedHashMap.put("data", new String(encoder.encode((jsonObject.getString(messageKey)).getBytes())));
         /*
-         * TODO:  ACK校验
+         * TODO:  ACK校验，字符串转化为2进制，二进制encode，ack确认包解码，转换2进制
          * */
-        char[] messagechar = new char[5];
-        int leek = 0;
-        for (String leekString : jsonObject.getString(messageKey).split(" ")) {
-            messagechar[leek] = (char) Integer.parseInt(leekString);
-            leek++;
-        }
+        TrainsformUtil trainsformUtil = new TrainsformUtil();
+        String binaryString = trainsformUtil.hexString2BinaryString(jsonObject.getString(messageKey));
 
+        Base64.Encoder encoder = Base64.getEncoder();
+        linkedHashMap.put("data", encoder.encodeToString(binaryString.getBytes()));
+
+        Base64.Decoder decoder = Base64.getDecoder();
         MQTT mqtt = new MQTT();
         mqttConfig.configure(mqtt);
         String newClientID = String.valueOf(Integer.parseInt(String.valueOf(mqtt.getClientId())) + clientIdOffset);
         mqtt.setClientId(newClientID);
         clientIdOffset++;
+        if (clientIdOffset == maxOffset) {
+            clientIdOffset = 1;
+        }
         BlockingConnection connection = mqtt.blockingConnection();
         connection.connect();
         connection.subscribe(ackTopics);
         connection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
                 QoS.EXACTLY_ONCE, false);
 
-        /*
-         * ack
-         * */
         Message message = connection.receive();
-        Base64.Decoder decoder = Base64.getDecoder();
         System.out.println("ack message\t" + message.getPayloadBuffer().toString().split("ascii: ")[1]);
 
         JSONObject ackJsonObject = JSON.parseObject(message.getPayloadBuffer().toString().split("ascii: ")[1]);

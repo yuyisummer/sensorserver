@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.entity.MqttSet;
 import com.jit.sensor.entity.Universaldata;
+import com.jit.sensor.global.socket.MyWebsocket;
 import com.jit.sensor.service.SensordataService;
 import com.jit.sensor.service.UniversalDataService;
 import com.jit.sensor.util.AnalysisNeedData;
@@ -119,13 +120,13 @@ public class MqttClient {
                     universaldata.setData(data1);
                     universaldata.setTime(String.valueOf(System.currentTimeMillis()));
 
-                        System.out.println("解析完的数据" + AnalysisNeedData.getWebSocketData(universaldata).toString());
-//                    MyWebsocket.sendMessage(AnalysisNeedData.getWebSocketData(universaldata).toString());
-                        if (universalDataService.insertdata(universaldata)) {
-                            System.out.println("传感器数据插入成功");
-                        } else {
-                            System.out.println("传感器数据插入失败");
-                        }
+                    System.out.println("解析完的数据" + AnalysisNeedData.getWebSocketData(universaldata).toString());
+                    MyWebsocket.sendMessage(AnalysisNeedData.getWebSocketData(universaldata).toString());
+                    if (universalDataService.insertdata(universaldata)) {
+                        System.out.println("传感器数据插入成功");
+                    } else {
+                        System.out.println("传感器数据插入失败");
+                    }
                 }
 //                }
                 onComplete.run();

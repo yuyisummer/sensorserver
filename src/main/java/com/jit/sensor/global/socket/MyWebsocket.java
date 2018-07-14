@@ -11,11 +11,14 @@ import java.io.IOException;
 public class MyWebsocket {
     private static Session session;
 
-    public static void sendMessage(String message) throws IOException {
+    public static void sendMessage(String message) {
         System.out.println(session == null);
         System.out.println(session.getBasicRemote());
-        session.getBasicRemote().sendText(message);
-
+        try {
+            session.getBasicRemote().sendText(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

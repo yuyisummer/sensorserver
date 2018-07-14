@@ -1,5 +1,6 @@
 package com.jit.sensor.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jit.sensor.entity.TResult;
 import com.jit.sensor.entity.TResultCode;
@@ -26,9 +27,9 @@ public class MqttConfigService {
      * 添加订阅
      */
     public Object addSubscription(JSONObject jsonObject) {
-        String recvTopic = "application/" + jsonObject.getString("Application") +
+        String recvTopic = "application/2" +
                 "/device/" + jsonObject.getString("Deveui") +
-                "/" + jsonObject.getString("Channel");
+                "/rx";
         CallbackConnection callbackConnection = MqttClient.callbackConnection;
 
         /*
@@ -72,9 +73,9 @@ public class MqttConfigService {
      * 删除订阅
      */
     public Object deleteSubscription(JSONObject jsonObject) {
-        Topic topicToDelete = new Topic("application/" + jsonObject.getString("Application") +
+        Topic topicToDelete = new Topic("application/2" +
                 "/device/" + jsonObject.getString("Deveui") +
-                "/" + jsonObject.getString("Channel"), QoS.EXACTLY_ONCE);
+                "/rx", QoS.EXACTLY_ONCE);
 
         Set<Topic> topicSet = new HashSet<>(Arrays.asList(MqttClient.topics));
         CallbackConnection callbackConnection = MqttClient.callbackConnection;
@@ -107,14 +108,14 @@ public class MqttConfigService {
      * 下发数据
      */
     public Object downloadData(JSONObject jsonObject) throws Exception {
-        String sendTopic = "application/" + jsonObject.getString("Application") +
+        String sendTopic = "application/2" +
                 "/device/" + jsonObject.getString("Deveui") +
-                "/" + jsonObject.getString("sendChannel");
+                "/tx";
 
-        String ackTopic = "application/" + jsonObject.getString("Application") +
+        String ackTopic = "application/2" +
                 "/device/" + jsonObject.getString("Deveui") +
-                "/" + jsonObject.getString("ackChannel");
-        Topic[] sendTopics = {new Topic(ackTopic, QoS.EXACTLY_ONCE)};
+                "/rx";
+        Topic[] ackTopics = {new Topic(ackTopic, QoS.EXACTLY_ONCE)};
 
 
         Base64.Encoder encoder = Base64.getEncoder();
@@ -123,7 +124,16 @@ public class MqttConfigService {
         linkedHashMap.put("confirmed", jsonObject.getString("confirmed"));
         linkedHashMap.put("fPort", jsonObject.getString("fPort"));
         String messageKey = "message";
-        linkedHashMap.put("data", new String(encoder.encode((jsonObject.getString(messageKey)).getBytes())));
+//        linkedHashMap.put("data", new String(encoder.encode((jsonObject.getString(messageKey)).getBytes())));
+        /*
+         * TODO:  ACK校验
+         * */
+        char[] messagechar = new char[5];
+        int leek = 0;
+        for (String leekString : jsonObject.getString(messageKey).split(" ")) {
+            messagechar[leek] = (char) Integer.parseInt(leekString);
+            leek++;
+        }
 
         MQTT mqtt = new MQTT();
         mqttConfig.configure(mqtt);
@@ -132,13 +142,19 @@ public class MqttConfigService {
         clientIdOffset++;
         BlockingConnection connection = mqtt.blockingConnection();
         connection.connect();
-        connection.subscribe(sendTopics);
+        connection.subscribe(ackTopics);
         connection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
                 QoS.EXACTLY_ONCE, false);
 
+        /*
+         * ack
+         * */
         Message message = connection.receive();
         Base64.Decoder decoder = Base64.getDecoder();
-        byte[] decodedData = decoder.decode(message.getPayload());
+        System.out.println("ack message\t" + message.getPayloadBuffer().toString().split("ascii: ")[1]);
+
+        JSONObject ackJsonObject = JSON.parseObject(message.getPayloadBuffer().toString().split("ascii: ")[1]);
+        byte[] decodedData = decoder.decode(ackJsonObject.getString("data"));
         if (decodedData[0] == 0 && decodedData[1] == 0) {
             return TResult.success();
         } else {

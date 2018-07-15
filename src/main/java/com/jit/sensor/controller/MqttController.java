@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
  * @author chy
  */
 @RestController
-@RequestMapping("/MQTT")
+@RequestMapping("/mqtt")
 public class MqttController {
     @Autowired
     private MqttConfigService mqttConfigService;

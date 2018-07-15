@@ -6,7 +6,6 @@ import com.jit.sensor.entity.TResult;
 import com.jit.sensor.entity.TResultCode;
 import com.jit.sensor.global.MqttClient;
 import com.jit.sensor.util.MqttConfig;
-import com.jit.sensor.util.TrainsformUtil;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
 import org.springframework.stereotype.Service;
@@ -128,19 +127,26 @@ public class MqttConfigService {
         /*
          * TODO:  ACK校验，字符串转化为2进制，二进制encode，ack确认包解码，转换2进制
          * */
-        TrainsformUtil trainsformUtil = new TrainsformUtil();
-        String binaryString = trainsformUtil.hexString2BinaryString(jsonObject.getString(messageKey));
 
         Base64.Encoder encoder = Base64.getEncoder();
-        linkedHashMap.put("data", encoder.encodeToString(binaryString.getBytes()));
-
+        String[] datas = jsonObject.getString(messageKey).split(" ");
+        byte[] bytes = new byte[5];
+        int leek = 0;
+        for (String leekString : datas) {
+            bytes[leek] = (byte) Integer.parseInt(leekString, 16);
+            leek++;
+        }
+        linkedHashMap.put("data", bytes);
+        /*
+         * TODO: short型发送
+         * */
         Base64.Decoder decoder = Base64.getDecoder();
         MQTT mqtt = new MQTT();
         mqttConfig.configure(mqtt);
         String newClientID = String.valueOf(Integer.parseInt(String.valueOf(mqtt.getClientId())) + clientIdOffset);
         mqtt.setClientId(newClientID);
         clientIdOffset++;
-        if (clientIdOffset == maxOffset) {
+        if (clientIdOffset >= maxOffset) {
             clientIdOffset = 1;
         }
         BlockingConnection connection = mqtt.blockingConnection();
@@ -159,6 +165,7 @@ public class MqttConfigService {
         } else {
             return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
         }
+//        return null;
     }
 
     /**

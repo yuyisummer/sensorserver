@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author chy
@@ -24,7 +25,6 @@ public class MqttConfigService {
     RelayMapper relayMapper;
     private MqttConfig mqttConfig = new MqttConfig();
     private int clientIdOffset = 1;
-    private int maxOffset = 100;
 
     /**
      * 添加订阅
@@ -116,11 +116,15 @@ public class MqttConfigService {
     public Object updateSensorCycle(JSONObject jsonObject) throws Exception {
 
         byte[] decodedAckData = getPublishAck(jsonObject);
-        // 下发成功
-        if (decodedAckData[0] == 0) {
-            return TResult.success();
+        if (decodedAckData == null) {
+            return TResult.failure(TResultCode.PUBLISH_ACK_TIMEOUT);
         } else {
-            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+            // 下发成功
+            if (decodedAckData[0] == 0) {
+                return TResult.success();
+            } else {
+                return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+            }
         }
     }
 
@@ -147,31 +151,35 @@ public class MqttConfigService {
             }
         }
         byte[] decodedAckData = getPublishAck(jsonObject);
-        // 数据下发成功
-        if (decodedAckData[0] == 0) {
-            Relay relay2 = new Relay();
-            relay2.setDeveui(jsonObject.getString("Deveui"));
-            // 设置对象属性，开FF,关00
-            if (databytes[2] == 0) {
-                relay2.setRelayStatus("00");
-            } else {
-                relay2.setRelayStatus("FF");
-            }
-            // 操作数据库
-            if (relay1 == null) {
-                relayMapper.insert(relay2);
-            } else {
-                relayMapper.updateByPrimaryKey(relay2);
-            }
-            return TResult.success();
+        if (decodedAckData == null) {
+            return TResult.failure(TResultCode.PUBLISH_ACK_TIMEOUT);
         } else {
-            // ack校验失败
-            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+            // 数据下发成功
+            if (decodedAckData[0] == 0) {
+                Relay relay2 = new Relay();
+                relay2.setDeveui(jsonObject.getString("Deveui"));
+                // 设置对象属性，开FF,关00
+                if (databytes[2] == 0) {
+                    relay2.setRelayStatus("00");
+                } else {
+                    relay2.setRelayStatus("FF");
+                }
+                // 操作数据库
+                if (relay1 == null) {
+                    relayMapper.insert(relay2);
+                } else {
+                    relayMapper.updateByPrimaryKey(relay2);
+                }
+                return TResult.success();
+            } else {
+                // ack校验失败
+                return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+            }
         }
     }
 
     /**
-     * 获取publish结果
+     * 获取publish ack结果
      */
     private byte[] getPublishAck(JSONObject jsonObject) throws Exception {
         String sendTopic = "application/2/device/" +
@@ -198,6 +206,7 @@ public class MqttConfigService {
         }
 
         linkedHashMap.put("data", encoder.encodeToString(databytes));
+        System.out.println(encoder.encodeToString(databytes));
 
         Base64.Decoder decoder = Base64.getDecoder();
         MQTT mqtt = new MQTT();
@@ -205,6 +214,7 @@ public class MqttConfigService {
         String newClientID = String.valueOf(Integer.parseInt(String.valueOf(mqtt.getClientId())) + clientIdOffset);
         mqtt.setClientId(newClientID);
         clientIdOffset++;
+        int maxOffset = 100;
         if (clientIdOffset >= maxOffset) {
             clientIdOffset = 1;
         }
@@ -215,11 +225,18 @@ public class MqttConfigService {
         connection.publish(sendTopic, JSONObject.toJSON(linkedHashMap).toString().getBytes(),
                 QoS.EXACTLY_ONCE, false);
 
-        Message message = connection.receive();
-        System.out.println("ack message\t" + message.getPayloadBuffer().toString().split("ascii: ")[1]);
-
-        JSONObject ackJsonObject = JSON.parseObject(message.getPayloadBuffer().toString().split("ascii: ")[1]);
-        return decoder.decode(ackJsonObject.getString("data"));
+        /*
+         * 等待15秒接受ack校验包
+         * */
+        Message message = connection.receive(15, TimeUnit.SECONDS);
+        if (message == null) {
+            return null;
+        } else {
+            System.out.println("ack message\t" + message.getPayloadBuffer().toString().split("ascii: ")[1]);
+            JSONObject ackJsonObject = JSON.parseObject(message.getPayloadBuffer().toString().split("ascii: ")[1]);
+            connection.disconnect();
+            return decoder.decode(ackJsonObject.getString("data"));
+        }
     }
 
     /**
@@ -227,7 +244,7 @@ public class MqttConfigService {
      */
     public Object getRelayStatus() throws Exception {
         /*
-         * 向随意传感器发送功能码为02的指令即可获取八路继电器状态
+         * 向任意传感器发送功能码为02的指令即可获取八路继电器状态
          * 指令数据区数据区无意义
          * */
         LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
@@ -240,11 +257,13 @@ public class MqttConfigService {
         jsonObject.putAll(linkedHashMap);
 
         byte[] decodedAckData = getPublishAck(jsonObject);
+        if (decodedAckData == null) {
+            return TResult.failure(TResultCode.PUBLISH_ACK_TIMEOUT);
+        } else {
+            String switchString = Integer.toBinaryString((decodedAckData[3] & 0xFF) + 0x100).substring(1);
 
-        String switchString = Integer.toBinaryString((decodedAckData[3] & 0xFF) + 0x100).substring(1);
-        char[] chars = switchString.toCharArray();
-
-        return TResult.success(switchString);
+            return TResult.success(switchString);
+        }
     }
 
 

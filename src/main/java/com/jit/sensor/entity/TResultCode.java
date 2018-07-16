@@ -12,7 +12,8 @@ public enum TResultCode {
     SUBSCRIPTION_EMPTY(1002, "频道为空"),
     DOWNLOADDATA_BROKEN(1003, "下行数据未接收到或有误"),
     PUBLISH_EXCEPTION(1004, "publish异常"),
-    CHANGE_RELAY_STATUS_FAILURE(1005, "继电器已处于目标状态");
+    CHANGE_RELAY_STATUS_FAILURE(1005, "继电器已处于目标状态"),
+    PUBLISH_ACK_TIMEOUT(1006, "publish未收到任何ack回应");
 
 
     private Integer code;

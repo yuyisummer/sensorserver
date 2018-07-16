@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("Relay")
-public class RelayController {
+@RequestMapping("/datadownload")
+public class DataDownloadController {
+
 }

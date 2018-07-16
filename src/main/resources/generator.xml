@@ -30,7 +30,7 @@
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
 
-        <table schema="websensor" tableName="ceshi1" enableCountByExample="false" enableDeleteByExample="false"
+        <table schema="websensor" tableName="relay" enableCountByExample="false" enableDeleteByExample="false"
                enableSelectByExample="false" enableUpdateByExample="false"/>
     </context>
 </generatorConfiguration>

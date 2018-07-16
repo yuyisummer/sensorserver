@@ -6,12 +6,14 @@ public enum TResultCode {
     FAILURE(2, "失败"),
 
     /*失败状态码
-     * 1000-2000
      * */
     SUBSCRIPTION_EXISTS(1000, "添加频道失败，频道已订阅"),
     UNSUBSCRIPTION_NOT_EXISTS(1001, "频道未订阅，取消订阅失败"),
     SUBSCRIPTION_EMPTY(1002, "频道为空"),
-    DOWNLOADDATA_BROKEN(1003, "下行数据未接收到或有误");
+    DOWNLOADDATA_BROKEN(1003, "下行数据未接收到或有误"),
+    PUBLISH_EXCEPTION(1004, "publish异常"),
+    CHANGE_RELAY_STATUS_FAILURE(1005, "继电器已处于目标状态");
+
 
     private Integer code;
 

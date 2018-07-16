@@ -2,12 +2,15 @@ package com.jit.sensor.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.jit.sensor.entity.Relay;
 import com.jit.sensor.entity.TResult;
 import com.jit.sensor.entity.TResultCode;
 import com.jit.sensor.global.MqttClient;
+import com.jit.sensor.mapper.RelayMapper;
 import com.jit.sensor.util.MqttConfig;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -17,10 +20,9 @@ import java.util.*;
  */
 @Service
 public class MqttConfigService {
+    @Autowired
+    RelayMapper relayMapper;
     private MqttConfig mqttConfig = new MqttConfig();
-    /**
-     * 下发数据,线程阻塞
-     */
     private int clientIdOffset = 1;
     private int maxOffset = 100;
 
@@ -53,6 +55,9 @@ public class MqttConfigService {
         if (Arrays.equals(newTopics, MqttClient.topics)) {
             return TResult.failure(TResultCode.SUBSCRIPTION_EXISTS);
         } else {
+            /*
+             * TODO:多线程，结果判定存疑
+             * */
             callbackConnection.subscribe(newTopics,
                     new Callback<byte[]>() {
                         @Override
@@ -106,40 +111,94 @@ public class MqttConfigService {
     }
 
     /**
-     * 下发数据
+     * 设置传感器上传周期
      */
-    public Object downloadData(JSONObject jsonObject) throws Exception {
-        String sendTopic = "application/2" +
-                "/device/" + jsonObject.getString("Deveui") +
-                "/tx";
+    public Object updateSensorCycle(JSONObject jsonObject) throws Exception {
 
-        String ackTopic = "application/2" +
-                "/device/" + jsonObject.getString("Deveui") +
+        byte[] decodedAckData = getPublishAck(jsonObject);
+        // 下发成功
+        if (decodedAckData[0] == 0) {
+            return TResult.success();
+        } else {
+            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+        }
+    }
+
+    /**
+     * 设置继电器开关
+     */
+    public Object setRelayStatus(JSONObject jsonObject) throws Exception {
+
+        String[] datas = jsonObject.getString("message").split(" ");
+        byte[] databytes = new byte[5];
+        int leek = 0;
+        for (String leekString : datas) {
+            databytes[leek] = (byte) Integer.parseInt(leekString, 16);
+            leek++;
+        }
+
+        Relay relay = new Relay();
+        relay.setDeveui(jsonObject.getString("Deveui"));
+        Relay relay1 = relayMapper.selectByPrimaryKey(relay.getDeveui());
+        // 数据库有此传感器开关数据，数据库开关状态与目标开关状态相同，直接返回失败
+        if (relay1 != null) {
+            if (relay1.getDeveui().equals(Byte.toString(databytes[2]))) {
+                return TResult.failure(TResultCode.CHANGE_RELAY_STATUS_FAILURE);
+            }
+        }
+        byte[] decodedAckData = getPublishAck(jsonObject);
+        // 数据下发成功
+        if (decodedAckData[0] == 0) {
+            Relay relay2 = new Relay();
+            relay2.setDeveui(jsonObject.getString("Deveui"));
+            // 设置对象属性，开FF,关00
+            if (databytes[2] == 0) {
+                relay2.setRelayStatus("00");
+            } else {
+                relay2.setRelayStatus("FF");
+            }
+            // 操作数据库
+            if (relay1 == null) {
+                relayMapper.insert(relay2);
+            } else {
+                relayMapper.updateByPrimaryKey(relay2);
+            }
+            return TResult.success();
+        } else {
+            // ack校验失败
+            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
+        }
+    }
+
+    /**
+     * 获取publish结果
+     */
+    private byte[] getPublishAck(JSONObject jsonObject) throws Exception {
+        String sendTopic = "application/2/device/" +
+                jsonObject.getString("Deveui") +
+                "/tx";
+        String ackTopic = "application/2/device/" +
+                jsonObject.getString("Deveui") +
                 "/rx";
         Topic[] ackTopics = {new Topic(ackTopic, QoS.EXACTLY_ONCE)};
-
-
         LinkedHashMap<Object, Object> linkedHashMap = new LinkedHashMap<>();
+        String messageKey = "message";
+
         linkedHashMap.put("reference", jsonObject.getString("reference"));
         linkedHashMap.put("confirmed", jsonObject.getString("confirmed"));
         linkedHashMap.put("fPort", jsonObject.getString("fPort"));
-        String messageKey = "message";
-        /*
-         * TODO:  ACK校验，字符串转化为2进制，二进制encode，ack确认包解码，转换2进制
-         * */
 
         Base64.Encoder encoder = Base64.getEncoder();
         String[] datas = jsonObject.getString(messageKey).split(" ");
-        byte[] bytes = new byte[5];
+        byte[] databytes = new byte[5];
         int leek = 0;
         for (String leekString : datas) {
-            bytes[leek] = (byte) Integer.parseInt(leekString, 16);
+            databytes[leek] = (byte) Integer.parseInt(leekString, 16);
             leek++;
         }
-        linkedHashMap.put("data", bytes);
-        /*
-         * TODO: short型发送
-         * */
+
+        linkedHashMap.put("data", encoder.encodeToString(databytes));
+
         Base64.Decoder decoder = Base64.getDecoder();
         MQTT mqtt = new MQTT();
         mqttConfig.configure(mqtt);
@@ -149,6 +208,7 @@ public class MqttConfigService {
         if (clientIdOffset >= maxOffset) {
             clientIdOffset = 1;
         }
+
         BlockingConnection connection = mqtt.blockingConnection();
         connection.connect();
         connection.subscribe(ackTopics);
@@ -159,14 +219,34 @@ public class MqttConfigService {
         System.out.println("ack message\t" + message.getPayloadBuffer().toString().split("ascii: ")[1]);
 
         JSONObject ackJsonObject = JSON.parseObject(message.getPayloadBuffer().toString().split("ascii: ")[1]);
-        byte[] decodedData = decoder.decode(ackJsonObject.getString("data"));
-        if (decodedData[0] == 0 && decodedData[1] == 0) {
-            return TResult.success();
-        } else {
-            return TResult.failure(TResultCode.DOWNLOADDATA_BROKEN);
-        }
-//        return null;
+        return decoder.decode(ackJsonObject.getString("data"));
     }
+
+    /**
+     * 继电器八路状态读取
+     */
+    public Object getRelayStatus() throws Exception {
+        /*
+         * 向随意传感器发送功能码为02的指令即可获取八路继电器状态
+         * 指令数据区数据区无意义
+         * */
+        LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+        linkedHashMap.put("Deveui", "004a770066003289");
+        linkedHashMap.put("reference", "abcd1234");
+        linkedHashMap.put("confirmed", "true");
+        linkedHashMap.put("fPort", "10");
+        linkedHashMap.put("message", "02 00 00 D0 00");
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.putAll(linkedHashMap);
+
+        byte[] decodedAckData = getPublishAck(jsonObject);
+
+        String switchString = Integer.toBinaryString((decodedAckData[3] & 0xFF) + 0x100).substring(1);
+        char[] chars = switchString.toCharArray();
+
+        return TResult.success(switchString);
+    }
+
 
     /**
      * 查看已订阅频道
